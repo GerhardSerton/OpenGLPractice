@@ -5,6 +5,10 @@
 
 #include "geometry.h"
 
+#include <GLM/glm.hpp>
+#include <GLM/gtc/matrix_transform.hpp>
+#include <GLM/gtc/type_ptr.hpp>
+
 class OpenGLWindow
 {
 public:
@@ -15,12 +19,15 @@ public:
     bool handleEvent(SDL_Event e);
     void cleanup();
 
+
 private:
     SDL_Window* sdlWin;
 
     GLuint vao;
+    GLuint vbo;
     GLuint shader;
     GLuint vertexBuffer;
+    GLuint colourBuffer;
 };
 
 #endif

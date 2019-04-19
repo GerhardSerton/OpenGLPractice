@@ -23,8 +23,7 @@ public:
     void* normalData();
     void* tangentData();
     void* bitangentData();
-
-private:
+    
     std::vector<float> vertices;
     std::vector<float> textureCoords;
     std::vector<float> normals;
