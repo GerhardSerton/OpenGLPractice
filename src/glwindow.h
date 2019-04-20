@@ -4,6 +4,7 @@
 #include <GL/glew.h>
 
 #include "geometry.h"
+#include <string>
 
 #include <GLM/glm.hpp>
 #include <GLM/gtc/matrix_transform.hpp>
@@ -28,6 +29,10 @@ private:
     GLuint shader;
     GLuint vertexBuffer;
     GLuint colourBuffer;
+
+    int vertexCount;
+    std::string currentObjectFile = "doggo.obj";
+    bool blue = true;
 };
 
 #endif

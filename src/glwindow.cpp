@@ -147,70 +147,43 @@ void OpenGLWindow::initGL()
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-
-
     // Note that this path is relative to your working directory
     // when running the program (IE if you run from within build
     // then you need to place these files in build as well)
     shader = loadShaderProgram("simple.vert", "simple.frag");
     glUseProgram(shader);
 
-    int colorLoc = glGetUniformLocation(shader, "objectColor");
-    glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
+    int colorLoc = glGetUniformLocation(shader, "objectColour");
+    glUniform3f(colorLoc, 0.0f, 0.0f, 1.0f);
 
     // Load the model that we want to use and buffer the vertex attributes
-    const GLfloat g_vertex_buffer_data[] = {
-    -1.0f,-1.0f,-1.0f, // triangle 1 : begin
-    -1.0f,-1.0f, 1.0f,
-    -1.0f, 1.0f, 1.0f, // triangle 1 : end
-    1.0f, 1.0f,-1.0f, // triangle 2 : begin
-    -1.0f,-1.0f,-1.0f,
-    -1.0f, 1.0f,-1.0f, // triangle 2 : end
-    1.0f,-1.0f, 1.0f,
-    -1.0f,-1.0f,-1.0f,
-    1.0f,-1.0f,-1.0f,
-    1.0f, 1.0f,-1.0f,
-    1.0f,-1.0f,-1.0f,
-    -1.0f,-1.0f,-1.0f,
-    -1.0f,-1.0f,-1.0f,
-    -1.0f, 1.0f, 1.0f,
-    -1.0f, 1.0f,-1.0f,
-    1.0f,-1.0f, 1.0f,
-    -1.0f,-1.0f, 1.0f,
-    -1.0f,-1.0f,-1.0f,
-    -1.0f, 1.0f, 1.0f,
-    -1.0f,-1.0f, 1.0f,
-    1.0f,-1.0f, 1.0f,
-    1.0f, 1.0f, 1.0f,
-    1.0f,-1.0f,-1.0f,
-    1.0f, 1.0f,-1.0f,
-    1.0f,-1.0f,-1.0f,
-    1.0f, 1.0f, 1.0f,
-    1.0f,-1.0f, 1.0f,
-    1.0f, 1.0f, 1.0f,
-    1.0f, 1.0f,-1.0f,
-    -1.0f, 1.0f,-1.0f,
-    1.0f, 1.0f, 1.0f,
-    -1.0f, 1.0f,-1.0f,
-    -1.0f, 1.0f, 1.0f,
-    1.0f, 1.0f, 1.0f,
-    -1.0f, 1.0f, 1.0f,
-    1.0f,-1.0f, 1.0f
-};
 
+    GeometryData shape;
+    shape.loadFromOBJFile(currentObjectFile);
+    vertexCount = shape.vertexCount();
+    cout << "Vertex count: " << vertexCount << "\n";
+    GLfloat vertexBufferData [shape.vertices.size()];
+    copy(shape.vertices.begin(), shape.vertices.end(), vertexBufferData);
 
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);
 
-    glm::mat4 Projection = glm::perspective(glm::radians(45.0f), (float) 640 / (float) 480, 0.1f, 100.0f);
+    glm::mat4 Projection = glm::perspective(glm::radians(35.0f), (float) 640 / (float) 480, 0.1f, 100.0f);
     glm::mat4 View = glm::lookAt(glm::vec3(4,3,3), glm::vec3(0,0,0), glm::vec3(0,1,0));
-
     glm::mat4 Model = glm::mat4(1.0f);
-    glm::mat4 mvp = Projection * View * Model;
+    //glm::mat4 mvp = Projection * View * Model;
 
-    GLuint MatrixID = glGetUniformLocation(shader, "MVP");
-    glUniformMatrix4fv (MatrixID, 1, GL_FALSE, &mvp[0][0]);
+    GLuint ProjID = glGetUniformLocation(shader, "Projection");
+    GLuint ViewID = glGetUniformLocation(shader, "View");
+    GLuint ModelID = glGetUniformLocation(shader, "Model");
+
+    glUniformMatrix4fv(ProjID, 1, GL_FALSE, &Projection[0][0]);
+    glUniformMatrix4fv(ViewID, 1, GL_FALSE, &View[0][0]);
+    glUniformMatrix4fv(ModelID, 1, GL_FALSE, &Model[0][0]);
+
+    //GLuint MatrixID = glGetUniformLocation(shader, "MVP");
+    //glUniformMatrix4fv (MatrixID, 1, GL_FALSE, &mvp[0][0]);
 
     glPrintError("Setup complete", true);
 }
@@ -218,12 +191,13 @@ void OpenGLWindow::initGL()
 void OpenGLWindow::render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    //int colorLoc = glGetUniformLocation(shader, "objectColour");
+    //glUniform3f(colorLoc, 0.0f, 0.0f, 1.0f);
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDrawArrays(GL_TRIANGLES, 0, vertexCount);
     glDisableVertexAttribArray(0);
 
     // Swap the front and back buffers on the window, effectively putting what we just "drew"
@@ -242,6 +216,48 @@ bool OpenGLWindow::handleEvent(SDL_Event e)
         if(e.key.keysym.sym == SDLK_ESCAPE)
         {
             return false;
+        }
+        if (e.key.keysym.sym == SDLK_DOWN)
+        {
+          int colorLoc = glGetUniformLocation(shader, "objectColour");
+          glUniform3f(colorLoc, 0.0f, 0.0f, 1.0f);
+        }
+        if (e.key.keysym.sym == SDLK_UP)
+        {
+          int colorLoc = glGetUniformLocation(shader, "objectColour");
+          glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
+        }
+        //Rotate the model
+        if (e.key.keysym.sym == SDLK_p)
+        {
+          int x, y;
+          SDL_GetMouseState(&x, &y);
+
+          glm::mat4 Model = glm::mat4(1.0f);
+          Model = glm::rotate(Model, glm::radians((float)x), glm::vec3(0.0f, 0.0f, 1.0f));
+          glm::mat4 Model2 = glm::mat4(1.0f);
+          Model2 = glm::rotate(Model2, glm::radians((float)y), glm::vec3(0.0f, 1.0f, 0.0f));
+
+          glm::mat4 finalModel = Model * Model2;
+
+          GLuint ModelID = glGetUniformLocation(shader, "Model");
+          glUniformMatrix4fv (ModelID, 1, GL_FALSE, &finalModel[0][0]);
+
+        }
+        //Reset the model
+        if (e.key.keysym.sym == SDLK_r)
+        {
+          glm::mat4 Projection = glm::perspective(glm::radians(35.0f), (float) 640 / (float) 480, 0.1f, 100.0f);
+          glm::mat4 View = glm::lookAt(glm::vec3(4,3,3), glm::vec3(0,0,0), glm::vec3(0,1,0));
+          glm::mat4 Model = glm::mat4(1.0f);
+
+          GLuint ProjID = glGetUniformLocation(shader, "Projection");
+          GLuint ViewID = glGetUniformLocation(shader, "View");
+          GLuint ModelID = glGetUniformLocation(shader, "Model");
+
+          glUniformMatrix4fv(ProjID, 1, GL_FALSE, &Projection[0][0]);
+          glUniformMatrix4fv(ViewID, 1, GL_FALSE, &View[0][0]);
+          glUniformMatrix4fv(ModelID, 1, GL_FALSE, &Model[0][0]);
         }
     }
     return true;
