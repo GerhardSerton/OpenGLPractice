@@ -172,15 +172,23 @@ void OpenGLWindow::initGL()
     glm::mat4 Projection = glm::perspective(glm::radians(35.0f), (float) 640 / (float) 480, 0.1f, 100.0f);
     glm::mat4 View = glm::lookAt(glm::vec3(4,3,3), glm::vec3(0,0,0), glm::vec3(0,1,0));
     glm::mat4 Model = glm::mat4(1.0f);
-    //glm::mat4 mvp = Projection * View * Model;
+    glm::mat4 Scale = glm::mat4(1.0f);
+    glm::mat4 Rotation = glm::mat4(1.0f);
+    glm::mat4 Translation = glm::mat4(1.0f);
 
     GLuint ProjID = glGetUniformLocation(shader, "Projection");
     GLuint ViewID = glGetUniformLocation(shader, "View");
     GLuint ModelID = glGetUniformLocation(shader, "Model");
+    GLuint ScaleID = glGetUniformLocation(shader, "Scale");
+    GLuint RotateID = glGetUniformLocation(shader, "Rotation");
+    GLuint TranslateID = glGetUniformLocation(shader, "Translation");
 
     glUniformMatrix4fv(ProjID, 1, GL_FALSE, &Projection[0][0]);
     glUniformMatrix4fv(ViewID, 1, GL_FALSE, &View[0][0]);
     glUniformMatrix4fv(ModelID, 1, GL_FALSE, &Model[0][0]);
+    glUniformMatrix4fv(ScaleID, 1, GL_FALSE, &Scale[0][0]);
+    glUniformMatrix4fv(RotateID, 1, GL_FALSE, &Rotation[0][0]);
+    glUniformMatrix4fv(TranslateID, 1, GL_FALSE, &Translation[0][0]);
 
     //GLuint MatrixID = glGetUniformLocation(shader, "MVP");
     //glUniformMatrix4fv (MatrixID, 1, GL_FALSE, &mvp[0][0]);
@@ -240,9 +248,21 @@ bool OpenGLWindow::handleEvent(SDL_Event e)
 
           glm::mat4 finalModel = Model * Model2;
 
-          GLuint ModelID = glGetUniformLocation(shader, "Model");
+          GLuint ModelID = glGetUniformLocation(shader, "Rotation");
           glUniformMatrix4fv (ModelID, 1, GL_FALSE, &finalModel[0][0]);
 
+        }
+        //Scale the model
+        if (e.key.keysym.sym == SDLK_s)
+        {
+          int x, y;
+          SDL_GetMouseState(&x, &y);
+
+          glm::mat4 Model = glm::mat4(1.0f);
+          Model = glm::scale(Model, glm::vec3((float)x/100, (float)x/100, (float)x/100));
+
+          GLuint ModelID = glGetUniformLocation(shader, "Scale");
+          glUniformMatrix4fv (ModelID, 1, GL_FALSE, &Model[0][0]);
         }
         //Reset the model
         if (e.key.keysym.sym == SDLK_r)
@@ -250,14 +270,23 @@ bool OpenGLWindow::handleEvent(SDL_Event e)
           glm::mat4 Projection = glm::perspective(glm::radians(35.0f), (float) 640 / (float) 480, 0.1f, 100.0f);
           glm::mat4 View = glm::lookAt(glm::vec3(4,3,3), glm::vec3(0,0,0), glm::vec3(0,1,0));
           glm::mat4 Model = glm::mat4(1.0f);
+          glm::mat4 Scale = glm::mat4(1.0f);
+          glm::mat4 Rotation = glm::mat4(1.0f);
+          glm::mat4 Translation = glm::mat4(1.0f);
 
           GLuint ProjID = glGetUniformLocation(shader, "Projection");
           GLuint ViewID = glGetUniformLocation(shader, "View");
           GLuint ModelID = glGetUniformLocation(shader, "Model");
+          GLuint ScaleID = glGetUniformLocation(shader, "Scale");
+          GLuint RotateID = glGetUniformLocation(shader, "Rotation");
+          GLuint TranslateID = glGetUniformLocation(shader, "Translation");
 
           glUniformMatrix4fv(ProjID, 1, GL_FALSE, &Projection[0][0]);
           glUniformMatrix4fv(ViewID, 1, GL_FALSE, &View[0][0]);
           glUniformMatrix4fv(ModelID, 1, GL_FALSE, &Model[0][0]);
+          glUniformMatrix4fv(ScaleID, 1, GL_FALSE, &Scale[0][0]);
+          glUniformMatrix4fv(RotateID, 1, GL_FALSE, &Rotation[0][0]);
+          glUniformMatrix4fv(TranslateID, 1, GL_FALSE, &Translation[0][0]);
         }
     }
     return true;
