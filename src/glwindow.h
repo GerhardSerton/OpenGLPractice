@@ -31,8 +31,9 @@ private:
     GLuint colourBuffer;
 
     int vertexCount;
-    std::string currentObjectFile = "doggo.obj";
+    std::string currentObjectFile = "suzanne.obj";
     bool blue = true;
+    int currentFuction = 0;
 };
 
 #endif

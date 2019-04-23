@@ -161,9 +161,16 @@ void OpenGLWindow::initGL()
     GeometryData shape;
     shape.loadFromOBJFile(currentObjectFile);
     vertexCount = shape.vertexCount();
-    cout << "Vertex count: " << vertexCount << "\n";
+    cout << "Vertex count: " << shape.vertices.size() << "\n";
+    cout << "Texture coords count: " << shape.textureCoords.size() << "\n";
+    cout << "Normals count: " << shape.normals.size() << "\n";
+    cout << "Tangents count: " << shape.tangents.size() << "\n";
+    cout << "BiTangents count: " << shape.bitangents.size() << "\n";
+    cout << "Faces count: " << shape.faces.size() << "\n";
+
     GLfloat vertexBufferData [shape.vertices.size()];
     copy(shape.vertices.begin(), shape.vertices.end(), vertexBufferData);
+
 
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -175,6 +182,7 @@ void OpenGLWindow::initGL()
     glm::mat4 Scale = glm::mat4(1.0f);
     glm::mat4 Rotation = glm::mat4(1.0f);
     glm::mat4 Translation = glm::mat4(1.0f);
+    glm::mat4 NegaTranslate = glm::mat4(1.0f);
 
     GLuint ProjID = glGetUniformLocation(shader, "Projection");
     GLuint ViewID = glGetUniformLocation(shader, "View");
@@ -182,6 +190,7 @@ void OpenGLWindow::initGL()
     GLuint ScaleID = glGetUniformLocation(shader, "Scale");
     GLuint RotateID = glGetUniformLocation(shader, "Rotation");
     GLuint TranslateID = glGetUniformLocation(shader, "Translation");
+    GLuint NegaTranslateID = glGetUniformLocation(shader, "NegaTranslate");
 
     glUniformMatrix4fv(ProjID, 1, GL_FALSE, &Projection[0][0]);
     glUniformMatrix4fv(ViewID, 1, GL_FALSE, &View[0][0]);
@@ -189,9 +198,9 @@ void OpenGLWindow::initGL()
     glUniformMatrix4fv(ScaleID, 1, GL_FALSE, &Scale[0][0]);
     glUniformMatrix4fv(RotateID, 1, GL_FALSE, &Rotation[0][0]);
     glUniformMatrix4fv(TranslateID, 1, GL_FALSE, &Translation[0][0]);
+    glUniformMatrix4fv(NegaTranslateID, 1, GL_FALSE, &NegaTranslate[0][0]);
+    //3glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    //GLuint MatrixID = glGetUniformLocation(shader, "MVP");
-    //glUniformMatrix4fv (MatrixID, 1, GL_FALSE, &mvp[0][0]);
 
     glPrintError("Setup complete", true);
 }
@@ -199,9 +208,55 @@ void OpenGLWindow::initGL()
 void OpenGLWindow::render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //int colorLoc = glGetUniformLocation(shader, "objectColour");
-    //glUniform3f(colorLoc, 0.0f, 0.0f, 1.0f);
 
+    //Rotate
+    if (currentFuction == 0)
+    {
+      int x, y;
+      SDL_GetMouseState(&x, &y);
+
+      glm::mat4 Model = glm::mat4(1.0f);
+      Model = glm::rotate(Model, glm::radians((float)x), glm::vec3(0.0f, 0.0f, 1.0f));
+      glm::mat4 Model2 = glm::mat4(1.0f);
+      Model2 = glm::rotate(Model2, glm::radians((float)y), glm::vec3(0.0f, 1.0f, 0.0f));
+
+      glm::mat4 finalModel = Model * Model2;
+
+      GLuint ModelID = glGetUniformLocation(shader, "Rotation");
+      glUniformMatrix4fv (ModelID, 1, GL_FALSE, &finalModel[0][0]);
+
+    }
+    //Scale the model
+    else if (currentFuction == 1)
+    {
+      int x, y;
+      SDL_GetMouseState(&x, &y);
+
+      glm::mat4 Model = glm::mat4(1.0f);
+      Model = glm::scale(Model, glm::vec3((float)x/100, (float)x/100, (float)x/100));
+
+      GLuint ModelID = glGetUniformLocation(shader, "Scale");
+      glUniformMatrix4fv (ModelID, 1, GL_FALSE, &Model[0][0]);
+    }
+    //Translate the model
+    else if (currentFuction == 2)
+    {
+      int x, y;
+      SDL_GetMouseState(&x, &y);
+
+      glm::mat4 Model = glm::mat4(1.0f);
+      Model = glm::translate(Model, glm::vec3((float)x/100, (float)y/100, 0.0));
+
+
+      glm::mat4 Inverse = glm::mat4(1.0f);
+      Inverse = glm::translate(Inverse, glm::vec3((float)x/-100, (float)y/-100, 0.0));
+
+      GLuint ModelID = glGetUniformLocation(shader, "Translation");
+      GLuint InverseID = glGetUniformLocation(shader, "NegaTranslate");
+
+      glUniformMatrix4fv (ModelID, 1, GL_FALSE, &Model[0][0]);
+      glUniformMatrix4fv (InverseID, 1, GL_FALSE, &Inverse[0][0]);
+    }
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
@@ -238,31 +293,18 @@ bool OpenGLWindow::handleEvent(SDL_Event e)
         //Rotate the model
         if (e.key.keysym.sym == SDLK_p)
         {
-          int x, y;
-          SDL_GetMouseState(&x, &y);
-
-          glm::mat4 Model = glm::mat4(1.0f);
-          Model = glm::rotate(Model, glm::radians((float)x), glm::vec3(0.0f, 0.0f, 1.0f));
-          glm::mat4 Model2 = glm::mat4(1.0f);
-          Model2 = glm::rotate(Model2, glm::radians((float)y), glm::vec3(0.0f, 1.0f, 0.0f));
-
-          glm::mat4 finalModel = Model * Model2;
-
-          GLuint ModelID = glGetUniformLocation(shader, "Rotation");
-          glUniformMatrix4fv (ModelID, 1, GL_FALSE, &finalModel[0][0]);
+          currentFuction = 0;
 
         }
         //Scale the model
         if (e.key.keysym.sym == SDLK_s)
         {
-          int x, y;
-          SDL_GetMouseState(&x, &y);
-
-          glm::mat4 Model = glm::mat4(1.0f);
-          Model = glm::scale(Model, glm::vec3((float)x/100, (float)x/100, (float)x/100));
-
-          GLuint ModelID = glGetUniformLocation(shader, "Scale");
-          glUniformMatrix4fv (ModelID, 1, GL_FALSE, &Model[0][0]);
+          currentFuction = 1;
+        }
+        //Translate the model
+        if (e.key.keysym.sym == SDLK_t)
+        {
+          currentFuction = 2;
         }
         //Reset the model
         if (e.key.keysym.sym == SDLK_r)
@@ -273,6 +315,7 @@ bool OpenGLWindow::handleEvent(SDL_Event e)
           glm::mat4 Scale = glm::mat4(1.0f);
           glm::mat4 Rotation = glm::mat4(1.0f);
           glm::mat4 Translation = glm::mat4(1.0f);
+          glm::mat4 NegaTranslate = glm::mat4(1.0f);
 
           GLuint ProjID = glGetUniformLocation(shader, "Projection");
           GLuint ViewID = glGetUniformLocation(shader, "View");
@@ -280,6 +323,7 @@ bool OpenGLWindow::handleEvent(SDL_Event e)
           GLuint ScaleID = glGetUniformLocation(shader, "Scale");
           GLuint RotateID = glGetUniformLocation(shader, "Rotation");
           GLuint TranslateID = glGetUniformLocation(shader, "Translation");
+          GLuint NegaTranslateID = glGetUniformLocation(shader, "NegaTranslate");
 
           glUniformMatrix4fv(ProjID, 1, GL_FALSE, &Projection[0][0]);
           glUniformMatrix4fv(ViewID, 1, GL_FALSE, &View[0][0]);
@@ -287,6 +331,28 @@ bool OpenGLWindow::handleEvent(SDL_Event e)
           glUniformMatrix4fv(ScaleID, 1, GL_FALSE, &Scale[0][0]);
           glUniformMatrix4fv(RotateID, 1, GL_FALSE, &Rotation[0][0]);
           glUniformMatrix4fv(TranslateID, 1, GL_FALSE, &Translation[0][0]);
+          glUniformMatrix4fv(NegaTranslateID, 1, GL_FALSE, &NegaTranslate[0][0]);
+        }
+
+        if (e.key.keysym.sym == SDLK_z)
+        {
+          GeometryData shape;
+          shape.loadFromOBJFile(currentObjectFile);
+          GLfloat vertexBufferData [shape.vertices.size()*2];
+          for (int i = 0; i < shape.vertices.size(); ++i)
+          {
+            vertexBufferData[i] = shape.vertices[i];
+          }
+          for (int j = 0; j < shape.vertices.size(); ++j)
+          {
+            vertexBufferData[shape.vertices.size() + j] = shape.vertices[j] + 1;
+          }
+
+          copy(shape.vertices.begin(), shape.vertices.end(), vertexBufferData);
+
+          glGenBuffers(1, &vbo);
+          glBindBuffer(GL_ARRAY_BUFFER, vbo);
+          glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);
         }
     }
     return true;

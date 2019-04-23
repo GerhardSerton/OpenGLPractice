@@ -139,6 +139,7 @@ void GeometryData::loadFromOBJFile(string filename)
             int texCoordIndex = 0;
             int normalIndex = 0;
 
+            //cout << "face found" << "\n";
             FaceData face = {};
             for(int index=0; index<3; index++)
             {
@@ -163,7 +164,7 @@ void GeometryData::loadFromOBJFile(string filename)
                         inStream.unget(); // This is just to prevent us from consuming a newline
                     }
                 }
-                
+
                 // NOTE: We subtract 1 here because the OBJ format uses 1-based indices
                 face.vertexIndex[index] = vertIndex - 1;
                 face.texCoordIndex[index] = texCoordIndex - 1;

@@ -26,3 +26,5 @@ clean:
 	rm -f $(TARGETPATH)
 	rm -f $(OBJ)
 
+debug:
+	g++ -g src/main.cpp src/glwindow.cpp src/geometry.cpp -o debug
